@@ -1,6 +1,6 @@
 import './App.css';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -91,11 +91,83 @@ function LandingPage() {
 }
 
 function TryOnPage() {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      setPreview(URL.createObjectURL(file));
+      setUploadStatus(null);
+    } else {
+      setSelectedFile(null);
+      setPreview(null);
+      setUploadStatus(null);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedFile) {
+      alert('Please select an image first!');
+      return;
+    }
+    setIsSubmitting(true);
+    setUploadStatus(null);
+    try {
+      // 1. Request pre-signed URL from backend
+      const res = await fetch('http://localhost:4000/get-presigned-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: selectedFile.name,
+          fileType: selectedFile.type,
+        }),
+      });
+      const data = await res.json();
+      if (!data.url) throw new Error('No URL returned from backend');
+
+      // 2. Upload the file to S3 using the pre-signed URL
+      const uploadRes = await fetch(data.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': selectedFile.type },
+        body: selectedFile,
+      });
+      if (!uploadRes.ok) throw new Error('Upload to S3 failed');
+
+      setUploadStatus('Upload successful!');
+    } catch (err: any) {
+      setUploadStatus('Upload failed: ' + (err.message || err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center pt-24">
       <h2 className="text-3xl font-bold mb-6">Virtual Try-On</h2>
       <p className="mb-4 text-gray-600">Upload your photo to get started!</p>
-      <input type="file" accept="image/*" className="mb-6" />
+      <input type="file" accept="image/*" className="mb-6" onChange={handleImageChange} />
+      {/* Image Preview */}
+      {preview && (
+        <div className="mb-6">
+          <img src={preview} alt="Preview" className="w-80 h-80 object-cover rounded-xl shadow-md border" />
+        </div>
+      )}
+      {/* Submit Button */}
+      <button
+        onClick={handleSubmit}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-md mb-6 disabled:opacity-50"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Uploading...' : 'Submit'}
+      </button>
+      {/* Upload Status */}
+      {uploadStatus && (
+        <div className={`mb-4 text-lg ${uploadStatus.startsWith('Upload successful') ? 'text-green-600' : 'text-red-600'}`}>{uploadStatus}</div>
+      )}
       {/* Placeholder for model output */}
       <div className="w-80 h-80 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
         AI Model Output Here
