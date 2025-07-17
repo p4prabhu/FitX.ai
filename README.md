@@ -1,54 +1,28 @@
-# React + TypeScript + Vite
+# FitX.ai – AI-Powered Virtual Try-On (AWS Hackathon Project)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**FitX.ai** is a full-stack, AI-powered virtual try-on web application developed as part of the **AWS Breaking Barriers Hackathon 2025**. The application allows users to visualize how clothes would look on them using generative AI models deployed on AWS, providing an interactive and immersive online shopping experience.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Upload or capture your photo to try on clothes virtually  
+- Real-time image processing using AWS **SageMaker** and **Lambda**  
+- Fully serverless architecture with **API Gateway**, **S3**, and **CloudFront**  
+- Scalable, cloud-native backend designed for production-readiness  
+- Built with **React**, **TypeScript**, and **Vite** for fast and responsive UI
 
-## Expanding the ESLint configuration
+## 🧱 Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Frontend:**
+- React + TypeScript
+- Tailwind CSS
+- Vite
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+**Backend & Cloud:**
+- AWS Lambda
+- Amazon S3
+- Amazon SageMaker
+- Amazon API Gateway
+- GitHub Actions (CI/CD)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📁 Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
