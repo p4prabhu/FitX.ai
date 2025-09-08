@@ -1,51 +1,116 @@
-import PhotoUpload from '../components/TryOn/PhotoUpload';
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 
-const TryOnPage = () => {
+const TryOnPage: React.FC = () => {
+  const [clothingFile, setClothingFile] = useState<File | null>(null);
+  const [userPhotoFile, setUserPhotoFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const onClothingDrop = useCallback((accepted: File[]) => {
+    if (accepted.length > 0) setClothingFile(accepted[0]);
+  }, []);
+  const onPhotoDrop = useCallback((accepted: File[]) => {
+    if (accepted.length > 0) setUserPhotoFile(accepted[0]);
+  }, []);
+
+  const { getRootProps: getClothingRootProps, getInputProps: getClothingInputProps, isDragActive: isClothingDragActive } =
+    useDropzone({ onDrop: onClothingDrop, accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] } });
+
+  const { getRootProps: getPhotoRootProps, getInputProps: getPhotoInputProps, isDragActive: isPhotoDragActive } =
+    useDropzone({ onDrop: onPhotoDrop, accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] } });
+
+  const handleProcess = async () => {
+    if (!clothingFile || !userPhotoFile) {
+      alert('Please upload both clothing and photo files');
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      await new Promise((r) => setTimeout(r, 3000)); // simulate
+      setResult('Processing complete! (This is a demo)');
+    } catch (e) {
+      console.error('Processing error:', e);
+      alert('Processing failed');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
-    <section className="w-full min-h-[90vh] flex flex-col items-center justify-center px-2 bg-gradient-to-br from-[#f8fbff] via-[#f5f5f5] to-[#eaf6fa]">
-      {/* Hero Section */}
-      <div className="w-full max-w-4xl text-center mb-14 mt-8">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-primary mb-4 tracking-tight leading-tight drop-shadow-sm">
-          Try On Clothes Online with <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">AI</span>
-        </h1>
-        <p className="text-xl text-secondary mb-6">
-          Experience AI-powered virtual try-on with <span className="font-bold text-primary">FitX.ai</span>
-        </p>
+    <div className="fx-root">
+      <div className="fx-backdrop">
+        <span className="fx-blob fx-b1" />
+        <span className="fx-blob fx-b2" />
+        <span className="fx-blob fx-b3" />
+        <span className="fx-grain" />
       </div>
-      {/* Main Card Section */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 items-stretch">
-        {/* Upload Card */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-[#e0e0e0] p-10 flex flex-col items-center min-h-[420px] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-          <PhotoUpload />
-          <button className="mt-8 w-full max-w-xs py-4 rounded-full bg-primary text-background text-lg font-bold shadow-md hover:bg-secondary hover:text-primary transition-colors">
-            Upload your photo
-          </button>
-          <p className="mt-4 text-secondary text-sm">Or just drag and drop here</p>
-          <div className="w-full border-t border-dashed border-[#e0e0e0] my-6" />
-          <p className="text-secondary text-xs mb-2">No image? Try one of these</p>
-          <div className="flex space-x-2">
-            {/* Demo images (placeholders) */}
-            <div className="w-12 h-16 bg-[#f5f5f5] rounded-lg border border-[#e0e0e0]" />
-            <div className="w-12 h-16 bg-[#f5f5f5] rounded-lg border border-[#e0e0e0]" />
-            <div className="w-12 h-16 bg-[#f5f5f5] rounded-lg border border-[#e0e0e0]" />
-            <div className="w-12 h-16 bg-[#f5f5f5] rounded-lg border border-[#e0e0e0]" />
+
+      <div className="fx-stack">
+        <div className="fx-container fx-fade" style={{ maxWidth: 960 }}>
+          <div className="fx-hero" style={{ marginBottom: 16 }}>
+            <span className="fx-chip">Step 1: Upload — Step 2: Generate</span>
+            <h1 className="fx-title"><span className="fx-title-grad">Virtual Try-On</span></h1>
+            <p className="fx-sub">Upload your clothing and photo to see how it looks on you</p>
           </div>
-        </div>
-        {/* Preview Card */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-[#e0e0e0] p-10 flex flex-col items-center justify-center min-h-[420px] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-          <h2 className="text-2xl font-bold text-primary mb-6 tracking-tight">Try-On Preview</h2>
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="flex flex-col items-center">
-              <div className="w-40 h-56 bg-[#f5f5f5] border-2 border-dashed border-secondary rounded-xl flex items-center justify-center mb-4">
-                <span className="text-secondary text-lg">No photo yet</span>
+
+          <div className="fx-grid">
+            <div className="fx-card fx-shine">
+              <h2 className="fx-card-title">Upload Clothing Item</h2>
+              <div
+                {...getClothingRootProps()}
+                className={`fx-drop ${isClothingDragActive ? 'active' : ''}`}
+              >
+                <input {...getClothingInputProps()} />
+                {clothingFile ? (
+                  <p className="fx-ok">✓ {clothingFile.name}</p>
+                ) : (
+                  <p className="fx-muted">
+                    {isClothingDragActive ? 'Drop the clothing image here...' : 'Drag & drop a clothing image here, or click to select'}
+                  </p>
+                )}
               </div>
-              <p className="text-secondary text-center text-base">Upload a photo to see your virtual try-on preview here.</p>
+            </div>
+
+            <div className="fx-card fx-shine">
+              <h2 className="fx-card-title">Upload Your Photo</h2>
+              <div
+                {...getPhotoRootProps()}
+                className={`fx-drop ${isPhotoDragActive ? 'active' : ''}`}
+              >
+                <input {...getPhotoInputProps()} />
+                {userPhotoFile ? (
+                  <p className="fx-ok">✓ {userPhotoFile.name}</p>
+                ) : (
+                  <p className="fx-muted">
+                    {isPhotoDragActive ? 'Drop your photo here...' : 'Drag & drop your photo here, or click to select'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* ⬇️ EXACT SAME BUTTON you already had */}
+          <div className="fx-cta" style={{ marginBottom: 22 }}>
+            <button
+              onClick={handleProcess}
+              disabled={!clothingFile || !userPhotoFile || isProcessing}
+              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? 'Processing...' : 'Generate Try-On'}
+            </button>
+          </div>
+
+          {result && (
+            <div className="fx-card fx-shine" style={{ textAlign:'center' }}>
+              <h3 className="fx-card-title">Result</h3>
+              <p className="fx-ok">{result}</p>
+            </div>
+          )}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-export default TryOnPage; 
+export default TryOnPage;

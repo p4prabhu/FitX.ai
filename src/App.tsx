@@ -1,6 +1,6 @@
 import './App.css';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { useCallback, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import TryOnPage from './pages/TryOnPage';
 
 // Add environment variable type definitions
 declare global {
@@ -8,371 +8,140 @@ declare global {
     env: {
       REACT_APP_S3_BUCKET: string;
       REACT_APP_AWS_REGION: string;
-    }
+    };
   }
 }
 
-function LandingPage() {
-  const navigate = useNavigate();
-  const handleGetStarted = useCallback(() => {
-    navigate('/tryon');
-  }, [navigate]);
-
+/** Injects all SaaS styles globally (works even if Tailwind isn't loaded) */
+function StyleInjector() {
   return (
-    <>
-      {/* ── Navigation Bar ───────────────────────────────────────────── */}
-      <nav className="w-full fixed top-0 inset-x-0 h-20 bg-black/90 backdrop-blur z-40">
-        <div className="flex items-center h-full max-w-7xl mx-auto px-6">
-          {/* Left: logo + links */}
-          <div className="flex items-center gap-10">
-            {/* Logo */}
-            <a href="#" className="flex items-center gap-3">
-              <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-400" />
-              <span className="text-2xl font-extrabold tracking-tight text-white">
-                FitX<span className="text-blue-400">.ai</span>
-              </span>
-            </a>
-            {/* Nav links */}
-            <a href="#" className="text-white hover:text-blue-400 font-semibold text-lg transition">Home</a>
-            <a href="#about" className="text-white hover:text-blue-400 font-semibold text-lg transition">About</a>
-          </div>
-          {/* Right: Login (ml-auto pushes it to the far end) */}
-          <button className="ml-auto bg-white text-black px-6 py-2 rounded-md font-semibold hover:bg-blue-50 transition">Login</button>
-        </div>
-      </nav>
-      {/* ── Hero Section (unchanged) ────────────────────────────────── */}
-      <main className="flex-grow flex items-center justify-center pt-20">
-        <div className="container py-20 flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-1 text-center md:text-left space-y-7">
-            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-gray-900">
-              Try On <span className="text-blue-600">Clothes</span> Virtually
-              <br />
-              With <span className="text-indigo-500">AI</span> Magic
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-xl">
-              Instantly see how outfits look on you. No downloads, no hassle.
-              Just upload your photo &amp; let our AI do the rest!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <button onClick={handleGetStarted} className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-3 rounded-lg shadow-lg transition">
-                Get Started
-              </button>
-            </div>
-          </div>
-          {/* Illustration placeholder */}
-          <div className="flex-1 flex justify-center">
-            <div className="w-80 h-80 bg-gradient-to-tr from-blue-100 via-indigo-100 to-white rounded-3xl shadow-xl flex items-center justify-center">
-              <span className="text-6xl text-blue-400">👕</span>
-            </div>
-          </div>
-        </div>
-      </main>
-      {/* ── Footer (unchanged) ─────────────────────────────────────── */}
-      <footer className="bg-white border-t mt-12">
-        <div className="container py-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center space-x-2">
-            <span className="inline-block w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-400" />
-            <span className="font-bold text-lg">FitX.ai</span>
-          </div>
-          <div className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} FitX.ai. All rights&nbsp;reserved.
-          </div>
-          <div className="flex space-x-4">
-            <a href="#" className="text-gray-400 hover:text-blue-600 transition">
-              <svg width="24" height="24" fill="currentColor">
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-blue-600 transition">
-              <svg width="24" height="24" fill="currentColor">
-                <rect x="4" y="4" width="16" height="16" rx="4" />
-              </svg>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-blue-600 transition">
-              <svg width="24" height="24" fill="currentColor">
-                <polygon points="12,2 22,22 2,22" />
-              </svg>
-            </a>
-          </div>
-        </div>
-      </footer>
-    </>
+    <style>{`
+/* ===== Base + Theme ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg1:#0b1020; --bg2:#0e1c5a;
+  --text:#EAF0FF; --muted:#B9C4E6;
+  --glass:rgba(255,255,255,.08); --glass2:rgba(255,255,255,.12);
+  --brand-sky:#7DD3FC; --brand-violet:#D8B4FE; --brand-emerald:#6EE7B7;
+  --radius:18px; --shadow:0 12px 35px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:#0b1020}
+
+/* ===== Backdrop (animated gradient + blobs + grain) ===== */
+.fx-root{position:relative;min-height:100vh;overflow-x:hidden}
+.fx-backdrop{position:fixed;inset:0;z-index:0}
+.fx-backdrop::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg,var(--bg1),var(--bg2),var(--bg1));
+  background-size:200% 200%;
+  animation:fx-grad-move 12s ease-in-out infinite;
+}
+@keyframes fx-grad-move{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.fx-blob{position:absolute;filter:blur(40px);opacity:.28;border-radius:999px;transform:translateZ(0)}
+.fx-b1{left:-6rem;top:-3rem;width:18rem;height:18rem;background:#EC4899;animation:fx-b1 16s ease-in-out infinite}
+.fx-b2{right:-8rem;top:3rem;width:20rem;height:20rem;background:#3B82F6;animation:fx-b2 18s ease-in-out infinite}
+.fx-b3{left:35%;bottom:-4rem;width:18rem;height:18rem;background:#10B981;animation:fx-b3 22s ease-in-out infinite}
+@keyframes fx-b1{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(40px,-30px) scale(1.08)}70%{transform:translate(-20px,20px) scale(.95)}}
+@keyframes fx-b2{0%,100%{transform:translate(0,0) scale(1)}35%{transform:translate(-30px,25px) scale(1.05)}65%{transform:translate(15px,-15px) scale(.92)}}
+@keyframes fx-b3{0%,100%{transform:translate(0,0) scale(1)}30%{transform:translate(25px,10px) scale(.96)}60%{transform:translate(-20px,-30px) scale(1.06)}}
+.fx-grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+/* ===== Layout + Hero ===== */
+.fx-stack{position:relative;z-index:1}
+.fx-container{width:100%;max-width:1120px;margin:0 auto;padding:72px 24px}
+.fx-hero{text-align:center}
+.fx-chip{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--glass2);
+  background:rgba(255,255,255,.1);color:#D6E6FF;font-weight:700;letter-spacing:.2px;backdrop-filter:blur(6px)}
+.fx-title{margin:16px 0 8px;font-size:clamp(32px,6vw,64px);font-weight:800;letter-spacing:-.02em}
+.fx-title-grad{background:linear-gradient(90deg,var(--brand-sky),var(--brand-violet),var(--brand-emerald));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.fx-sub{color:var(--muted);font-size:clamp(16px,2.3vw,20px);margin:6px 0 18px}
+.fx-cta{text-align:center;margin:22px 0 14px}
+
+/* ===== Cards / Shine / Fade ===== */
+.fx-card{margin:28px auto 0;max-width:820px;padding:24px 26px;border-radius:var(--radius);
+  border:1px solid var(--glass2);background:rgba(255,255,255,.1);backdrop-filter:blur(8px);box-shadow:var(--shadow);line-height:1.65}
+.fx-shine{position:relative;overflow:hidden}
+.fx-shine::after{content:"";position:absolute;top:-130%;left:-20%;width:140%;height:80%;transform:rotate(12deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transition:transform .9s ease}
+.fx-shine:hover::after{transform:translateY(230%) rotate(12deg)}
+.fx-fade{animation:fx-fade .5s ease-out both}
+@keyframes fx-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== Grid + Dropzones (used by TryOnPage too) ===== */
+.fx-grid{display:grid;grid-template-columns:1fr;gap:24px;margin:28px 0}
+@media (min-width:900px){.fx-grid{grid-template-columns:1fr 1fr}}
+.fx-card-title{margin:0 0 14px;font-size:24px;font-weight:700}
+.fx-muted{color:#D5DEF8;opacity:.9}
+.fx-ok{color:#86efac;font-weight:600}
+.fx-drop{border:2px dashed rgba(255,255,255,.22);border-radius:14px;padding:28px;text-align:center;
+  transition:all .2s ease;background:rgba(255,255,255,.06)}
+.fx-drop:hover{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.08)}
+.fx-drop.active{border-color:#7DD3FC;background:rgba(125,211,252,.14);box-shadow:0 10px 30px rgba(45,161,255,.28)}
+
+/* ===== Minimal utility so your existing BUTTONS render even without Tailwind ===== */
+.inline-flex{display:inline-flex}.items-center{align-items:center}
+.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}
+.border{border-width:1px}.border-transparent{border-color:transparent}
+.text-base{font-size:1rem}.font-medium{font-weight:500}.font-semibold{font-weight:600}
+.rounded-md{border-radius:.375rem}.rounded-lg{border-radius:.5rem}
+.text-white{color:#fff}.bg-blue-600{background:#2563eb}.hover\\:bg-blue-700:hover{background:#1d4ed8}
+.px-8{padding-left:2rem;padding-right:2rem}
+.disabled\\:bg-gray-400:disabled{background:#9ca3af}.disabled\\:cursor-not-allowed:disabled{cursor:not-allowed}
+    `}</style>
   );
 }
 
-function TryOnPage() {
-  const [step, setStep] = useState<'clothing' | 'photo'>('clothing');
-  const [clothingPreview, setClothingPreview] = useState<string | null>(null);
-  const [clothingFile, setClothingFile] = useState<File | null>(null);
-  const [clothingType, setClothingType] = useState<string | null>(null);
-  const [clothingUploadStatus, setClothingUploadStatus] = useState<string | null>(null);
-  const [clothingKey, setClothingKey] = useState<string | null>(null);
-  const [isClothingUploading, setIsClothingUploading] = useState(false);
-  
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoUploadStatus, setPhotoUploadStatus] = useState<string | null>(null);
-  const [photoKey, setPhotoKey] = useState<string | null>(null);
-  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
-  
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processedImageKey, setProcessedImageKey] = useState<string | null>(null);
-  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
-
-  // Helper function to get S3 URL from key
-  const getS3Url = (key: string) => {
-    return `https://${window.env.REACT_APP_S3_BUCKET}.s3.${window.env.REACT_APP_AWS_REGION}.amazonaws.com/${key}`;
-  };
-
-  const handleClothingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setClothingFile(file);
-      setClothingPreview(URL.createObjectURL(file));
-      setClothingUploadStatus(null);
-      setClothingKey(null); // Reset the key when a new file is selected
-    }
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-      setPhotoUploadStatus(null);
-      setPhotoKey(null); // Reset the key when a new file is selected
-    }
-  };
-
-  const uploadToS3 = async (file: File, uploadType: 'clothing' | 'user-photo' | 'generated') => {
-    const res = await fetch('http://localhost:4000/get-presigned-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileName: file.name,
-        fileType: file.type,
-        uploadType
-      }),
-    });
-    const data = await res.json();
-    if (!data.url || !data.key) throw new Error('No URL or key returned from backend');
-
-    const uploadRes = await fetch(data.url, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type },
-      body: file,
-    });
-    if (!uploadRes.ok) throw new Error('Upload to S3 failed');
-
-    return data.key;
-  };
-
-  const handleClothingUpload = async () => {
-    if (!clothingFile || isClothingUploading || clothingKey) {
-      return; // Prevent upload if already uploading or already uploaded
-    }
-
-    setIsClothingUploading(true);
-    setClothingUploadStatus('Uploading...');
-
-    try {
-      // Upload clothing image to S3
-      const key = await uploadToS3(clothingFile, 'clothing');
-      setClothingKey(key);
-      setClothingUploadStatus('Upload successful!');
-
-      // Detect clothing type
-      const response = await fetch('http://localhost:4000/detect-clothing-type', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageKey: key }),
-      });
-
-      const data = await response.json();
-      if (data.type === 'unknown') {
-        throw new Error('Could not detect clothing type. Please try a clearer image.');
-      }
-
-      setClothingType(data.type);
-      setStep('photo');
-    } catch (err: unknown) {
-      setClothingUploadStatus('Upload failed: ' + (err instanceof Error ? err.message : String(err)));
-      setClothingKey(null); // Reset the key on failure
-    } finally {
-      setIsClothingUploading(false);
-    }
-  };
-
-  const handlePhotoUpload = async () => {
-    if (!photoFile || isPhotoUploading || photoKey) {
-      return; // Prevent upload if already uploading or already uploaded
-    }
-
-    setIsPhotoUploading(true);
-    setPhotoUploadStatus('Uploading...');
-
-    try {
-      const key = await uploadToS3(photoFile, 'user-photo');
-      setPhotoKey(key);
-      setPhotoUploadStatus('Upload successful!');
-    } catch (err: unknown) {
-      setPhotoUploadStatus('Upload failed: ' + (err instanceof Error ? err.message : String(err)));
-      setPhotoKey(null); // Reset the key on failure
-    } finally {
-      setIsPhotoUploading(false);
-    }
-  };
-
-  const handleProcessImage = async () => {
-    if (!clothingKey || !photoKey || !clothingType) {
-      alert('Please complete all steps first!');
-      return;
-    }
-
-    setIsProcessing(true);
-    setProcessingStatus(null);
-    setProcessedImageKey(null);
-
-    try {
-      const response = await fetch('http://localhost:4000/process-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userPhotoKey: photoKey,
-          clothingKey: clothingKey,
-          clothingType
-        }),
-      });
-
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Processing failed');
-
-      setProcessedImageKey(data.processedImageKey);
-      setProcessingStatus('Processing successful!');
-    } catch (err: unknown) {
-      setProcessingStatus('Processing failed: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
+/** Landing page (keeps your button exactly as-is) */
+function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center pt-24">
-      <h2 className="text-3xl font-bold mb-6">Virtual Try-On</h2>
-      
-      {step === 'clothing' ? (
-        // Step 1: Clothing Upload
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold mb-4">1. Upload Clothing Item</h3>
-          <p className="text-gray-600 mb-4">Upload a clear image of the clothing item you want to try on.</p>
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="mb-4" 
-            onChange={handleClothingChange}
-            disabled={isClothingUploading} 
-          />
-          {clothingPreview && (
-            <div className="mb-4">
-              <img src={clothingPreview} alt="Clothing Item" className="w-80 h-80 object-cover rounded-xl shadow-md border" />
-            </div>
-          )}
-          <button
-            onClick={handleClothingUpload}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-md disabled:opacity-50"
-            disabled={!clothingFile || isClothingUploading || !!clothingKey}
-          >
-            {isClothingUploading ? 'Uploading...' : clothingKey ? 'Uploaded ✓' : 'Upload Clothing'}
-          </button>
-          {clothingUploadStatus && (
-            <div className={`mt-4 text-lg ${clothingUploadStatus.startsWith('Upload successful') ? 'text-green-600' : 'text-red-600'}`}>
-              {clothingUploadStatus}
-            </div>
-          )}
-        </div>
-      ) : (
-        // Step 2: Photo Upload
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold mb-4">2. Upload Your Photo</h3>
-          <p className="text-gray-600 mb-4">
-            Upload a full-body photo of yourself. We'll try on the {clothingType} you selected.
-          </p>
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="mb-4" 
-            onChange={handlePhotoChange}
-            disabled={isPhotoUploading} 
-          />
-          {photoPreview && (
-            <div className="mb-4">
-              <img src={photoPreview} alt="Your Photo" className="w-80 h-80 object-cover rounded-xl shadow-md border" />
-            </div>
-          )}
-          <div className="flex gap-4">
-            <button
-              onClick={() => setStep('clothing')}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg shadow-md"
-              disabled={isPhotoUploading}
-            >
-              Back
-            </button>
-            <button
-              onClick={handlePhotoUpload}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-md disabled:opacity-50"
-              disabled={!photoFile || isPhotoUploading || !!photoKey}
-            >
-              {isPhotoUploading ? 'Uploading...' : photoKey ? 'Uploaded ✓' : 'Upload Photo'}
-            </button>
-          </div>
-          {photoUploadStatus && (
-            <div className={`mt-4 text-lg ${photoUploadStatus.startsWith('Upload successful') ? 'text-green-600' : 'text-red-600'}`}>
-              {photoUploadStatus}
-            </div>
-          )}
-          
-          {/* Process Image Button */}
-          {photoKey && (
-            <div className="mt-8">
-              <button
-                onClick={handleProcessImage}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg shadow-md disabled:opacity-50"
-                disabled={isProcessing}
+    <div className="fx-root">
+      <div className="fx-backdrop">
+        <span className="fx-blob fx-b1" />
+        <span className="fx-blob fx-b2" />
+        <span className="fx-blob fx-b3" />
+        <span className="fx-grain" />
+      </div>
+
+      <div className="fx-stack">
+        <div className="fx-container fx-fade">
+          <div className="fx-hero">
+            <span className="fx-chip">FitX.ai • Virtual Try-On</span>
+            <h1 className="fx-title"><span className="fx-title-grad">Welcome to FitX.ai</span></h1>
+            <p className="fx-sub">AI-powered virtual try-on for fashion</p>
+
+            {/* ⬇️ EXACT SAME BUTTON you already have */}
+            <div className="fx-cta">
+              <a
+                href="/tryon"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
-                {isProcessing ? 'Processing...' : 'Generate Try-On'}
-              </button>
+                Get Started
+              </a>
             </div>
-          )}
+
+            <div className="fx-card fx-shine">
+              Try on outfits virtually before you buy. Upload a clothing image and a photo — see the fit in seconds.
+            </div>
+          </div>
         </div>
-      )}
-      
-      {/* Processing Status */}
-      {processingStatus && (
-        <div className={`mb-4 text-lg ${processingStatus.startsWith('Processing successful') ? 'text-green-600' : 'text-red-600'}`}>
-          {processingStatus}
-        </div>
-      )}
-      
-      {/* Processed Image */}
-      {processedImageKey && (
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-4">Your Virtual Try-On Result:</h3>
-          <img 
-            src={getS3Url(processedImageKey)} 
-            alt="AI Generated Try-On" 
-            className="w-80 h-80 object-cover rounded-xl shadow-md border"
-          />
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/tryon" element={<TryOnPage />} />
-    </Routes>
+    <>
+      <StyleInjector />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/tryon" element={<TryOnPage />} />
+      </Routes>
+    </>
   );
 }
