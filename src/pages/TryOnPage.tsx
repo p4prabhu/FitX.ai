@@ -6,12 +6,82 @@ const TryOnPage: React.FC = () => {
   const [userPhotoFile, setUserPhotoFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [clothingKey, setClothingKey] = useState<string | null>(null);
+  const [userPhotoKey, setUserPhotoKey] = useState<string | null>(null);
 
-  const onClothingDrop = useCallback((accepted: File[]) => {
-    if (accepted.length > 0) setClothingFile(accepted[0]);
+  // Function to upload file to S3
+  const uploadToS3 = async (file: File, uploadType: 'clothing' | 'user-photo') => {
+    try {
+      const contentType = file.type || 'application/octet-stream';
+      // Get presigned URL from backend
+      const response = await fetch('http://localhost:4000/get-presigned-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: contentType,
+          uploadType: uploadType
+        })
+      });
+      
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(`Failed to get presigned URL (${response.status} ${response.statusText}) ${errText}`);
+      }
+      
+      const { url, key } = await response.json();
+      
+      // Upload file to S3
+      const uploadResponse = await fetch(url, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': contentType }
+      });
+      
+      if (!uploadResponse.ok) {
+        const errText = await uploadResponse.text().catch(() => '');
+        throw new Error(`S3 upload failed (${uploadResponse.status} ${uploadResponse.statusText}) ${errText}`);
+      }
+      
+      return key;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
+  const onClothingDrop = useCallback(async (accepted: File[]) => {
+    if (accepted.length > 0) {
+      const file = accepted[0];
+      setClothingFile(file);
+      
+      try {
+        const key = await uploadToS3(file, 'clothing');
+        setClothingKey(key);
+        console.log('Clothing uploaded to S3:', key);
+      } catch (error: unknown) {
+        console.error('Failed to upload clothing:', error);
+        const message = error instanceof Error ? error.message : JSON.stringify(error);
+        alert('Failed to upload clothing file: ' + message);
+      }
+    }
   }, []);
-  const onPhotoDrop = useCallback((accepted: File[]) => {
-    if (accepted.length > 0) setUserPhotoFile(accepted[0]);
+  
+  const onPhotoDrop = useCallback(async (accepted: File[]) => {
+    if (accepted.length > 0) {
+      const file = accepted[0];
+      setUserPhotoFile(file);
+      
+      try {
+        const key = await uploadToS3(file, 'user-photo');
+        setUserPhotoKey(key);
+        console.log('Photo uploaded to S3:', key);
+      } catch (error: unknown) {
+        console.error('Failed to upload photo:', error);
+        const message = error instanceof Error ? error.message : JSON.stringify(error);
+        alert('Failed to upload photo file: ' + message);
+      }
+    }
   }, []);
 
   const { getRootProps: getClothingRootProps, getInputProps: getClothingInputProps, isDragActive: isClothingDragActive } =
@@ -21,17 +91,50 @@ const TryOnPage: React.FC = () => {
     useDropzone({ onDrop: onPhotoDrop, accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] } });
 
   const handleProcess = async () => {
-    if (!clothingFile || !userPhotoFile) {
-      alert('Please upload both clothing and photo files');
+    if (!clothingKey || !userPhotoKey) {
+      alert('Please upload both clothing and photo files first');
       return;
     }
+    
     setIsProcessing(true);
     try {
-      await new Promise((r) => setTimeout(r, 3000)); // simulate
-      setResult('Processing complete! (This is a demo)');
-    } catch (e) {
-      console.error('Processing error:', e);
-      alert('Processing failed');
+      // First detect clothing type
+      const clothingTypeResponse = await fetch('http://localhost:4000/detect-clothing-type', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageKey: clothingKey })
+      });
+      
+      if (!clothingTypeResponse.ok) {
+        throw new Error('Failed to detect clothing type');
+      }
+      
+      const clothingType = await clothingTypeResponse.json();
+      console.log('Detected clothing type:', clothingType);
+      
+      // Process the image
+      const processResponse = await fetch('http://localhost:4000/process-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userPhotoKey: userPhotoKey,
+          clothingKey: clothingKey,
+          clothingType: clothingType.type
+        })
+      });
+      
+      if (!processResponse.ok) {
+        throw new Error('Failed to process image');
+      }
+      
+      const processResult = await processResponse.json();
+      console.log('Processing result:', processResult);
+      
+      setResult(`Processing complete! Clothing type: ${clothingType.type} (Confidence: ${clothingType.confidence}%)`);
+    } catch (error: unknown) {
+      console.error('Processing error:', error);
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      alert('Processing failed: ' + message);
     } finally {
       setIsProcessing(false);
     }
@@ -94,7 +197,7 @@ const TryOnPage: React.FC = () => {
           <div className="fx-cta" style={{ marginBottom: 22 }}>
             <button
               onClick={handleProcess}
-              disabled={!clothingFile || !userPhotoFile || isProcessing}
+              disabled={!clothingKey || !userPhotoKey || isProcessing}
               className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {isProcessing ? 'Processing...' : 'Generate Try-On'}
